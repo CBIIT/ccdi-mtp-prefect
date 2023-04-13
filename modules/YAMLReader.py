@@ -5,8 +5,6 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-logger = logging.getLogger(__name__)
-
 class YAMLReader(object):
 
     def __init__(self, yaml_file):
