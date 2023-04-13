@@ -1,0 +1,19 @@
+---
+S3TOLocal:
+  files-to-download:
+    - s3-bucket: mtp-data-files
+      key: raw-data/v_11_18_ot_22_04_chop_11_1/associationByDatasourceDirect/part-00008-722b5d0f-0296-4d8c-8a67-bb3a5c9b25c7-c000.json
+      type: file
+      save-path: /Users/cheny39/Documents/work/tmp/
+      overwrite: True
+      checksum: 123
+      checksum-type: md5
+      checksum-matching: True
+    - s3-bucket: mtp-data-files
+      key: raw-data/v_11_18_ot_22_04_chop_11_1/associationByDatasourceDirect/
+      type: dir
+      save-path: /Users/cheny39/Documents/work/tmp/association/
+      checksum-matching: false
+      overwrite: True
+steps:
+  - S3TOLocal
