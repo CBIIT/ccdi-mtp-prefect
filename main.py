@@ -1,11 +1,11 @@
-import modules.S3TOLocal as S3TOLocal
+import modules.S3ToLocal as S3ToLocal
 import modules.cfg as cfg
 from modules.YAMLReader import YAMLReader
 from modules.Logger import logger
 
 def execution(step, config):
-    if(step == "S3TOLocal"):
-        S3TOLocal.run(config)
+    if(step == "S3ToLocal"):
+        S3ToLocal.run(config)
     else:
         logger.error("Unknown step: %s", step)
 
