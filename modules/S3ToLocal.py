@@ -3,7 +3,7 @@ Download file from S3 to local
 \author Yizhen Chen
 
 """
-import boto3
+import boto3    
 import os
 from botocore.exceptions import ClientError
 from prefect import Flow, task
@@ -12,6 +12,7 @@ import modules.Commons as commons
 import time
 
 
+s3 = boto3.resource('s3')
 fails_tasks =[]
 success_tasks =[]
 skip_tasks=[]
@@ -35,7 +36,7 @@ def isValidTask(task):
         if field  not in task:
             logger.error("Required field %s is not presented ", field)
             flag=False
-    if "checksum-matching" in task and task["checksum-matching"]:
+    if "checksum-matching" in task and task["checksum-matching"] == True:
         if "cheksum" not in task or "checksum-type" not in task:
             logger.error("Checksum-matching is marked as true but required field checksum or checksum-type is not presented ")
             flag = False
@@ -69,7 +70,6 @@ output: None (ERROR) / file_path (exists/downloaded)
 '''
 
 def download_file(bucket_name: str, s3_key: str, save_path: str,overwrite: bool) -> str:
-    s3 = boto3.resource('s3')
     save_path = save_path + s3_key
     # create directories if required directories does not exist
     if not os.path.exists(os.path.dirname(save_path)):
@@ -92,6 +92,10 @@ def download_file(bucket_name: str, s3_key: str, save_path: str,overwrite: bool)
         return None
 
 
+def setupAWSClient(profile_name):
+    session = boto3.Session(profile_name=profile_name)
+    s3 = session.client('s3')
+
 
 '''
 download folder from S3 to local.  
@@ -104,7 +108,6 @@ input :  buck_name
 output: N/A
 '''
 def download_folder(bucket_name: str, folder_name: str, save_path: str, overwrite: bool) -> str:
-    s3 = boto3.resource('s3')
     bucket = s3.Bucket(bucket_name)
     for obj in bucket.objects.filter(Prefix=folder_name):
         download_file(bucket_name, obj.key, save_path,overwrite)
@@ -126,7 +129,7 @@ def process(task):
         logger.info("Start download %s %s to %s",s3_bucket, key, save_path)
         if(type == "file"):
             file_path = download_file(s3_bucket,key,save_path,overwrite)
-            if checksum_matching & commons.validate_checksum(file_path,checksum_type,checksum):
+            if checksum_matching == True & commons.validate_checksum(file_path,checksum_type,checksum):
                 logger.info("Pass Checksum validation - file %s  on local", save_path)
             else:
                 logger.error("Fails Checksum validation - file %s  on local, deleting file", save_path)
@@ -136,8 +139,10 @@ def process(task):
 
 
 
-
 def do_download_jobs(config):
+    if "s3-profle" in config:
+        setupAWSClient(config["s3-profle"])
+
     #get list of download tasks
     list_of_download_tasks = config["files-to-download"]
     # process task one by one
