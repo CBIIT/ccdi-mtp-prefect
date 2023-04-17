@@ -4,11 +4,9 @@ import json
 import os
 import sys
 import hashlib
-from modules.Logger import logger
-
-logger = logging.getLogger(__name__)
-
-
+import modules.Logger as Logger
+from prefect import task
+logger = Logger.getLogger()
 '''
 check if dict has key or not,return key value if key exists, otherwise return default value
 input : dict
@@ -29,7 +27,7 @@ Delete file from local machine by given file path
 input:  file path
 output :N/A
 '''
-
+@task(name="Delete file from local machine by given file path")
 def remove_file(file_path):
     try:
         os.remove(file_path)

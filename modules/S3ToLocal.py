@@ -6,11 +6,11 @@ Download file from S3 to local
 import boto3    
 import os
 from botocore.exceptions import ClientError
-from prefect import Flow, task
-from modules.Logger import logger
 import modules.Commons as commons
 import time
-
+from prefect import task, flow, get_run_logger
+import modules.Logger as Logger
+logger = Logger.getLogger()
 
 s3 = None
 fails_tasks =[]
@@ -24,7 +24,9 @@ make sure if checksum validation is required, checksum type and value are provid
 input :  task settings. a dict object derivative from yaml file
 output: bool 
 '''
+@task(name="Validate individual task settings")
 def isValidTask(task):
+    logger = get_run_logger()
     required_fields=[
         "s3-bucket",
         "key",
@@ -50,6 +52,7 @@ make sure if checksum validation is required, checksum type and value are provid
 input :  task settings. a dict object derivative from yaml file
 output: bool 
 '''
+@task(name="validate config setting")
 def isConfigValid(config):
     if "files-to-download" in config:
         return  True
@@ -69,7 +72,9 @@ input :  buck_name
 output: None (ERROR) / file_path (exists/downloaded)
 '''
 
+@task(name="download file from S3 to local")
 def download_file(bucket_name: str, s3_key: str, save_path: str,overwrite: bool) -> str:
+    logger = get_run_logger()
     save_path = save_path + s3_key
     # create directories if required directories does not exist
     if not os.path.exists(os.path.dirname(save_path)):
@@ -92,6 +97,7 @@ def download_file(bucket_name: str, s3_key: str, save_path: str,overwrite: bool)
         return None
 
 
+@task(name="Setup AWS Client Session by assigning profile to use")
 def setupAWSClient(profile_name):
     session = boto3.Session(profile_name=profile_name)
     global s3
@@ -108,6 +114,7 @@ input :  buck_name
           overwrite
 output: N/A
 '''
+
 def download_folder(bucket_name: str, folder_name: str, save_path: str, overwrite: bool) -> str:
     bucket = s3.Bucket(bucket_name)
     for obj in bucket.objects.filter(Prefix=folder_name):
@@ -158,7 +165,9 @@ def do_download_jobs(config):
 '''
 main function 
 '''
+@flow(name="Execute Job to Download files from S3 ")
 def run(config):
+    logger = get_run_logger()
     start_time = time.perf_counter()
     # get config
     logger.info(config)
