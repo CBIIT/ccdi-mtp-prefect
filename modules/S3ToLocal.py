@@ -12,7 +12,7 @@ import modules.Commons as commons
 import time
 
 
-s3 = boto3.resource('s3')
+s3 = None
 fails_tasks =[]
 success_tasks =[]
 skip_tasks=[]
@@ -51,7 +51,7 @@ input :  task settings. a dict object derivative from yaml file
 output: bool 
 '''
 def isConfigValid(config):
-    if "files-to-download" in config :
+    if "files-to-download" in config:
         return  True
     else:
         return False
@@ -94,7 +94,8 @@ def download_file(bucket_name: str, s3_key: str, save_path: str,overwrite: bool)
 
 def setupAWSClient(profile_name):
     session = boto3.Session(profile_name=profile_name)
-    s3 = session.client('s3')
+    global s3
+    s3 = session.resource('s3')
 
 
 '''
@@ -140,8 +141,10 @@ def process(task):
 
 
 def do_download_jobs(config):
-    if "s3-profle" in config:
-        setupAWSClient(config["s3-profle"])
+
+    if "s3-profile" in config:
+        logger.info("setup s3-profile  %s", config["s3-profile"])
+        setupAWSClient(config["s3-profile"])
 
     #get list of download tasks
     list_of_download_tasks = config["files-to-download"]

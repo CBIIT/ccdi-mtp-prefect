@@ -1,9 +1,9 @@
 ---
 S3ToLocal:
-  s3-profle: default
+  s3-profile: mtp-opensearch
   files-to-download:
-    - s3-bucket: mtp-data-files
-      key: raw-data/v_11_18_ot_22_04_chop_11_1/associationByDatasourceDirect/part-00008-722b5d0f-0296-4d8c-8a67-bb3a5c9b25c7-c000.json
+    - s3-bucket: d3b-openaccess-us-east-1-prd-pbta
+      key: open-targets/v12/mtp-tables/pre-release/putative-oncogene-fused-gene-freq.jsonl.gz
       type: file
       save-path: /Users/cheny39/Documents/work/tmp/tmp/
       overwrite: True
