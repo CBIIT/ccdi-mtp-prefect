@@ -4,7 +4,7 @@ S3ToLocal:
   save-path: /Users/cheny39/Documents/work/tmp/tmp/
   overwrite: True
   checksum-type: md5
-  checksum-matching: False
+  checksum-matching: True
   s3-bucket: d3b-openaccess-us-east-1-prd-pbta
   type: file
   files-to-download:
