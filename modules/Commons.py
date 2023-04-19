@@ -23,7 +23,6 @@ def check_dict_key(my_dict, key, default_value):
 
 '''
 Delete file from local machine by given file path
-
 input:  file path
 output :N/A
 '''
@@ -64,11 +63,9 @@ def read_csv_to_dict(path):
         reader = csv.reader(csvfile)
         return list(reader)
 
-
 def create_directory_if_not_found(path):
     if not os.path.exists(path):
         os.makedirs(path)
-
 
 def read_json_with_multiple_Obj(path):
     jsonList = []

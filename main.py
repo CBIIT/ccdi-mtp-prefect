@@ -13,7 +13,7 @@ def execution(step, config):
         logger.error("Unknown step: %s", step)
 
 
-@flow(name="mtp_etl_pipeline")
+@flow(name="CCDI MTP ETL")
 def main(url):
     logger = get_run_logger()
     try:
@@ -32,8 +32,6 @@ def main(url):
         else:
             execution(step, yaml_dict[step])
 
-
-
 if __name__ == '__main__':
-    url = "https://raw.githubusercontent.com/CBIIT/ccdi-mtp-prefect/dev/config.yaml"
+    url = "https://raw.githubusercontent.com/CBIIT/ccdi-mtp-prefect/local/config/local_download_file.yaml"
     main(url)

@@ -18,46 +18,33 @@ success_tasks =[]
 skip_tasks=[]
 
 '''
-Validate individual task settings to have required fields and logic correctly, 
-make sure if checksum validation is required, checksum type and value are provided as well. 
-
-input :  task settings. a dict object derivative from yaml file
-output: bool 
-'''
-@task(name="Validate individual task settings")
-def isValidTask(task):
-    logger = get_run_logger()
-    required_fields=[
-        "s3-bucket",
-        "key",
-        "save-path"
-    ]
-    logger.info("validate required fields in the configuration %s", required_fields)
-    flag = True
-    for field in required_fields:
-        if field  not in task:
-            logger.error("Required field %s is not presented ", field)
-            flag=False
-    if "checksum-matching" in task and task["checksum-matching"] == True:
-        if "cheksum" not in task or "checksum-type" not in task:
-            logger.error("Checksum-matching is marked as true but required field checksum or checksum-type is not presented ")
-            flag = False
-    return flag
-
-
-'''
 Validate overall tasks settings to have required fields and logic correctly, 
 make sure if checksum validation is required, checksum type and value are provided as well. 
 
 input :  task settings. a dict object derivative from yaml file
 output: bool 
 '''
-@task(name="validate config setting")
+@task(name="Validate individual task settings")
 def isConfigValid(config):
-    if "files-to-download" in config:
-        return  True
-    else:
-        return False
+    logger = get_run_logger()
+    required_fields=[
+        "s3-profile",
+        "save-path",
+        "s3-bucket",
+        "overwrite",
+        "type"
+    ]
+    logger.info("validate required fields in the configuration %s", required_fields)
+    flag = True
+    for field in required_fields:
+        if field not in config:
+            logger.error("Required field %s is not presented ", field)
+            flag=False
+    if "checksum-matching" in config and config["checksum-matching"] == True:
+        if "checksum-type" not in config:
+            logger.error("Checksum-matching is marked as true but required field checksum or checksum-type is not presented ")
+            flag = False
+    return flag
 
 
 
@@ -86,6 +73,7 @@ def download_file(bucket_name: str, s3_key: str, save_path: str,overwrite: bool)
             skip_tasks.append(bucket_name+"/"+s3_key)
             return save_path
     try:
+        logger.info("Download s3 file %s  to %s.",s3_key, save_path)
         s3.Bucket(bucket_name).download_file(s3_key, save_path)
         logger.info("download s3 files %s success.", save_path)
         success_tasks.append(bucket_name+"/"+s3_key)
@@ -114,26 +102,18 @@ input :  buck_name
           overwrite
 output: N/A
 '''
-
 def download_folder(bucket_name: str, folder_name: str, save_path: str, overwrite: bool) -> str:
     bucket = s3.Bucket(bucket_name)
     for obj in bucket.objects.filter(Prefix=folder_name):
-        download_file(bucket_name, obj.key, save_path,overwrite)
+        # download sub folder
+        if obj.key.endswith('/'):
+            if obj.key!=folder_name:
+                download_folder(bucket_name, obj.key, save_path,overwrite)
+        else:
+            download_file(bucket_name, obj.key, save_path,overwrite)
 
-
-def process(task):
+def process(s3_bucket,type,key,save_path,overwrite,checksum_matching,checksum_type,checksum):
     # validate if task has required attributes
-    if isValidTask(task):
-        # get all configure settings
-        logger.info("pass validation")
-        s3_bucket = task["s3-bucket"]
-        key = task["key"]
-        type = commons.check_dict_key(task,"type","file")
-        save_path=task["save-path"]
-        checksum_matching = commons.check_dict_key(task,"checksum-matching",False)
-        checksum = commons.check_dict_key(task, "checksum", "")
-        checksum_type = commons.check_dict_key(task, "checksum-type", "")
-        overwrite = commons.check_dict_key(task, "overwrite", True)
         logger.info("Start download %s %s to %s",s3_bucket, key, save_path)
         if(type == "file"):
             file_path = download_file(s3_bucket,key,save_path,overwrite)
@@ -148,24 +128,30 @@ def process(task):
 
 
 def do_download_jobs(config):
-
     if "s3-profile" in config:
         logger.info("setup s3-profile  %s", config["s3-profile"])
         setupAWSClient(config["s3-profile"])
+    s3_bucket = config["s3-bucket"]
+    type = commons.check_dict_key(config, "type", "file")
+    save_path = config["save-path"]
+    checksum_matching = commons.check_dict_key(config, "checksum-matching", False)
+    checksum_type = commons.check_dict_key(config, "checksum-type", "")
+    overwrite = commons.check_dict_key(config, "overwrite", True)
 
     #get list of download tasks
     list_of_download_tasks = config["files-to-download"]
     # process task one by one
     for task in list_of_download_tasks:
         # process each target file with RMTL list
-        process(task)
+        checksum = commons.check_dict_key(task, "checksum", "")
+        process(s3_bucket,type,task["key"],save_path,overwrite,checksum_matching,checksum_type,checksum)
 
 
 
 '''
 main function 
 '''
-@flow(name="Execute Job to Download files from S3 ")
+@flow(name="CCDI-MTP : Execute Job to Download files from S3 ")
 def run(config):
     logger = get_run_logger()
     start_time = time.perf_counter()
@@ -182,3 +168,5 @@ def run(config):
     logger.info("downloaded %s files", len(success_tasks))
     logger.info("skips %s files", len(skip_tasks))
     logger.info("fail to download %s files", len(fails_tasks))
+    for task in fails_tasks:
+        logger.info("fail to download %s ", task)
