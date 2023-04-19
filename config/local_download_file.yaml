@@ -6,12 +6,9 @@ S3ToLocal:
   checksum-type: md5
   checksum-matching: False
   s3-bucket: d3b-openaccess-us-east-1-prd-pbta
+  type: file
   files-to-download:
     - key: open-targets/v12/mtp-tables/pre-release/putative-oncogene-fused-gene-freq.jsonl.gz
       checksum: 123
-      type: file
-    - s3-bucket: mtp-data-files
-      key: raw-data/v_11_18_ot_22_04_chop_11_1/associationByDatasourceDirect/
-      type: dir
 steps:
   - S3ToLocal
