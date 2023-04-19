@@ -9,6 +9,6 @@ S3ToLocal:
   type: file
   files-to-download:
     - key: open-targets/v12/mtp-tables/pre-release/putative-oncogene-fused-gene-freq.jsonl.gz
-      checksum: 123
+      checksum: cd8de727601868472d29886006695c3c
 steps:
   - S3ToLocal
