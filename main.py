@@ -3,12 +3,15 @@ import requests
 import yaml
 from addict import Dict
 import modules.S3ToLocal as S3ToLocal
+import  modules.FTPToLocal as FTPTOLocal
 import modules.Logger as Logger
 logger = Logger.getLogger()
 
 def execution(step, config):
-    if(step == "S3ToLocal"):
+    if step == "S3ToLocal":
         S3ToLocal.run(config)
+    elif step == "FTPToLocal":
+        FTPTOLocal.run(config)
     else:
         logger.error("Unknown step: %s", step)
 

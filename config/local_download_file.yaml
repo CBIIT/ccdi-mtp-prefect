@@ -6,9 +6,35 @@ S3ToLocal:
   checksum-type: md5
   checksum-matching: True
   s3-bucket: d3b-openaccess-us-east-1-prd-pbta
+  # Type can be file or dir.
+  # If type is dir, the program will download all the files with ftp folder WITHOUT checksum validation.
+  # if type is dir, you need to provide folder path in files to download
+  # if type is file
+  # you have the option to validate each file's checksum
+  # you have to list all the files to be downloaded
   type: file
   files-to-download:
     - key: open-targets/v12/mtp-tables/pre-release/putative-oncogene-fused-gene-freq.jsonl.gz
       checksum: cd8de727601868472d29886006695c3c
+FTPToLocal:
+  host-name: ftp.ebi.ac.uk
+  # if is_anonymous is false, user must provide username and pwd to connect to the ftp, that could be refers to prefect secretes.
+  is_anonymous:  True
+  username: admin
+  password: admin
+  overwrite: True
+  checksum-type: sha1
+  checksum-matching: True
+  # Type can be file or dir.
+  # If type is dir, the program will download all the files with ftp folder WITHOUT checksum validation.
+  # if type is dir, you need to provide folder path in files to download
+  # if type is file
+  # you have the option to validate each file's checksum
+  # you have to list all the files to be downloaded
+  type: file
+  file_extension: json
+  files-to-download:
+    - path: pub/databases/opentargets/platform/22.11/output/etl/json/targets/part-00156-a58b02a9-0daa-4cf0-aac3-20428ba520c2-c000.json
+      checksum: 385099f668c52ea9cfcec76d81a9f6da8aa10d0e
 steps:
-  - S3ToLocal
+  - FTPToLocal
