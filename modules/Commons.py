@@ -4,7 +4,7 @@ import json
 import os
 import sys
 import hashlib
-import modules.Logger as Logger
+import Logger as Logger
 from prefect import task
 logger = Logger.getLogger()
 '''
@@ -36,15 +36,17 @@ def remove_file(file_path):
 
 
 def validate_checksum(filename, type,expected_checksum):
+    if type == "MD5":
+        alg = hashlib.md5()
+    elif type == "SHA-1":
+        alg = hashlib.sha1()
+    elif type == "SHA-2":
+        alg = hashlib.sha256()
+    else:
+        return  False
+
     with open(filename, "rb") as f:
         # create a new MD5 hash object
-        if type=="md5":
-            alg = hashlib.md5()
-        if type == "SHA-1":
-            alg = hashlib.sha1()
-        if type == "SHA-2":
-            alg = hashlib.sha256()
-
         # read the file in chunks to avoid loading the whole file into memory at once
         chunk_size = 1024 * 1024  # 1 MB
         chunk = f.read(chunk_size)

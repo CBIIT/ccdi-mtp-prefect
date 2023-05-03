@@ -3,13 +3,12 @@ Download file from FTP to local
 \author Yizhen Chen
 
 """
-
 from ftplib import FTP
 import os
 import time
-import modules.Commons as commons
+import Commons as commons
 from prefect import task, flow, get_run_logger
-import modules.Logger as Logger
+import Logger as Logger
 logger = Logger.getLogger()
 
 
@@ -23,8 +22,9 @@ skip_tasks=[]
 success_tasks=[]
 fails_tasks=[]
 
-
+@task(name="connect to FTP")
 def connect(HOSTNAME,isAnonymous = True ,USERNAME = "username@email.com" ,PASSWORD = "pwd"):
+    logger = get_run_logger()
     try:
         if isAnonymous:
             logger.info("Connect to FTP: %s", HOSTNAME)
@@ -63,10 +63,11 @@ def makeParentDirs(path):
         except OSError as e:
             logger.error("Get ERROR when creating directories recursively : %s", e)
 
-
+@task(name="download files")
 def downloadFile(ftp_server, filename, dest,overwrite= False, checksum_matching= False,checksum_type="md5",checksum=""):
+        logger = get_run_logger()
         logger.info("download file %s", filename)
-        dirs = dest + "/" + filename
+        dirs = dest + filename
         if not os.path.exists(os.path.dirname(dirs)):
             makeParentDirs(dirs)
         else:
@@ -74,6 +75,7 @@ def downloadFile(ftp_server, filename, dest,overwrite= False, checksum_matching=
             if not overwrite:
                 logger.info("Download FTP file %s exists on local, ignore download step.", filename)
                 skip_tasks.append(filename)
+                return
 
         logger.info("Downloading file :  {0}".format(filename))
         logger.info("Saving  file to  file :  {0}".format(os.path.dirname(dirs)))
@@ -86,12 +88,14 @@ def downloadFile(ftp_server, filename, dest,overwrite= False, checksum_matching=
                 logger.error("An error occurred while reading the file. %s", dirs)
                 fails_tasks.append(filename)
 
-        if checksum_matching == True & commons.validate_checksum(dirs, checksum_type, checksum):
-            logger.info("Pass Checksum validation - file %s  on local", dirs)
+        if checksum_matching == True:
+            if commons.validate_checksum(dirs, checksum_type, checksum):
+                    logger.info("Pass Checksum validation - file %s  on local", dirs)
+            else:
+                logger.error("Fails Checksum validation - file %s  on local, deleting file", dirs)
+                commons.remove_file(dirs)
         else:
-            logger.error("Fails Checksum validation - file %s  on local, deleting file", dirs)
-            commons.remove_file(dirs)
-
+            logger.info("Skip Checksum validation - file %s", dirs)
 
 
 
@@ -103,8 +107,9 @@ def isDirectory(item):
 
 
 # find files in a directory with specific file_extension
-
+@task(name="find files in a directory with specific file_extension")
 def findFilesInDir(ftp,path, file_extension="n/a"):
+    logger = get_run_logger()
     logger.info("find files in a %s with specific file_extension  %s", path , file_extension)
     logger.info("find files in  %s with specific file_extension  %s", path , file_extension)
     files = []
@@ -117,7 +122,7 @@ def findFilesInDir(ftp,path, file_extension="n/a"):
     while len(folders) > 0:
 
         item = folders.pop()
-        item_path = path + "/" +item
+        item_path = path + item
         if isDirectory(item):
             #add items in that directory to folders
             ls = ftp.nlst(item)
@@ -129,13 +134,12 @@ def findFilesInDir(ftp,path, file_extension="n/a"):
             else:
                 files.append(item_path)
 
-
+    ftp.cwd("/")
     return files
 
 
 def do_download_jobs(config):
 
-    'FTP HOST'
     HOSTNAME = config["host-name"]
     isAnonymous = config["is_anonymous"]
     userName=commons.check_dict_key(config, "username", "username")
@@ -143,17 +147,17 @@ def do_download_jobs(config):
     checksum_matching = commons.check_dict_key(config, "checksum-matching", False)
     checksum_type = commons.check_dict_key(config, "checksum-type", "")
     overwrite = commons.check_dict_key(config, "overwrite", False)
-    OUTPUT_FOLDER = config["save-path"]
+    OUTPUT_FOLDER = commons.check_dict_key(config, "save-path", "/Users/cheny39/Documents/work/tmp/tmp/")
     isFolder = commons.check_dict_key(config, "type", "file")
 
-    file_extension =commons.check_dict_key(config, "file_extension", "json")
+    file_extension =commons.check_dict_key(config, "file_extension", "n/a")
     #Connect to FTP
     ftp = connect(HOSTNAME)
     #get list of download tasks
     list_of_download_tasks = config["files-to-download"]
 
 
-    if  isFolder :
+    if  isFolder != "file" :
         # process task one by one
         for task in list_of_download_tasks:
             FTP_PATH = task["path"]
@@ -162,21 +166,24 @@ def do_download_jobs(config):
             files = findFilesInDir(ftp,FTP_PATH, file_extension)
 
             checksum_matching = False
+            checksum=""
             #Download Json Files one by one
             for file in files:
-                downloadFile(ftp,file,OUTPUT_FOLDER, overwrite,checksum_matching)
+                downloadFile(ftp,file,OUTPUT_FOLDER, overwrite,checksum_matching,checksum_type, checksum)
     else:
         for task in list_of_download_tasks:
             file = task["path"]
-            checksum=task["checksum"]
+            checksum=commons.check_dict_key(task, "checksum", "")
             # Download Json Files one by one
             downloadFile(ftp, file, OUTPUT_FOLDER, overwrite, checksum_matching, checksum_type, checksum)
 
     close(ftp)
 
+
 '''
-main function
+main function 
 '''
+@flow(name="CCDI-MTP : Execute Job to Download files from FTP ")
 def run(config):
     logger = get_run_logger()
     start_time = time.perf_counter()
@@ -185,9 +192,7 @@ def run(config):
     end_time = time.perf_counter()
     execution_time = end_time - start_time
     execution_time_in_minutes = execution_time / 60.0
-
     do_download_jobs(config)
-
     logger.info("Job - Download file from FTP to local finished. Execution time in minutes %s:", execution_time_in_minutes)
     logger.info("downloaded %s files", len(success_tasks))
     logger.info("skips %s files", len(skip_tasks))

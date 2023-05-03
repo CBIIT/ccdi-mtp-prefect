@@ -4,3 +4,4 @@ pip3 install addict
 pip3 install definitions
 pip3 install boto3
 pip3 install prefect
+pip3 install pytest

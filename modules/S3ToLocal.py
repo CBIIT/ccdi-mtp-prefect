@@ -58,7 +58,6 @@ input :  buck_name
           overwrite
 output: None (ERROR) / file_path (exists/downloaded)
 '''
-
 @task(name="download file from S3 to local")
 def download_file(bucket_name: str, s3_key: str, save_path: str,overwrite: bool) -> str:
     logger = get_run_logger()
@@ -90,8 +89,6 @@ def setupAWSClient(profile_name):
     session = boto3.Session(profile_name=profile_name)
     global s3
     s3 = session.resource('s3')
-
-
 '''
 download folder from S3 to local.  
 It iterates all all files with in a S3 folder and download them one by one
@@ -117,11 +114,15 @@ def process(s3_bucket,type,key,save_path,overwrite,checksum_matching,checksum_ty
         logger.info("Start download %s %s to %s",s3_bucket, key, save_path)
         if(type == "file"):
             file_path = download_file(s3_bucket,key,save_path,overwrite)
-            if checksum_matching == True & commons.validate_checksum(file_path,checksum_type,checksum):
-                logger.info("Pass Checksum validation - file %s  on local", save_path)
+            if checksum_matching == True :
+                if commons.validate_checksum(file_path,checksum_type,checksum):
+                    logger.info("Pass Checksum validation - file %s  on local", save_path)
+                else:
+                    logger.error("Fails Checksum validation - file %s  on local, deleting file", save_path)
+                    commons.remove_file(file_path)
             else:
-                logger.error("Fails Checksum validation - file %s  on local, deleting file", save_path)
-                commons.remove_file(file_path)
+                logger.info("Skip Checksum validation - file %s ", save_path)
+
         else:
             download_folder(s3_bucket,key,save_path,overwrite)
 
@@ -145,8 +146,6 @@ def do_download_jobs(config):
         # process each target file with RMTL list
         checksum = commons.check_dict_key(task, "checksum", "")
         process(s3_bucket,type,task["key"],save_path,overwrite,checksum_matching,checksum_type,checksum)
-
-
 
 '''
 main function 

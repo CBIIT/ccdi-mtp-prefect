@@ -36,5 +36,5 @@ def main(url):
             execution(step, yaml_dict[step])
 
 if __name__ == '__main__':
-    url = "https://raw.githubusercontent.com/CBIIT/ccdi-mtp-prefect/local/config/local_download_file.yaml"
+    url = "https://raw.githubusercontent.com/CBIIT/ccdi-mtp-prefect/mtp/config/local_download_file.yaml"
     main(url)
