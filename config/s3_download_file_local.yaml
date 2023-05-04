@@ -2,7 +2,7 @@
 S3ToLocal:
   s3-profile: mtp-opensearch
   type: file
-  save-path: /home/cheny39/tmp/
+  save-path: /Users/cheny39/Documents/work/tmp/tmp/
   overwrite: False
   checksum-type: MD5
   checksum-matching: True

@@ -65,7 +65,7 @@ def download_file(bucket_name: str, s3_key: str, save_path: str,overwrite: bool)
     # create directories if required directories does not exist
     if not os.path.exists(os.path.dirname(save_path)):
         os.makedirs(os.path.dirname(save_path))
-    else:
+    if os.path.exists(os.path.dirname(save_path+s3_key)):
         #if Download file exists and overwrite set False, then skip download step
         if not overwrite:
             logger.info("Download s3 file %s exists on local, ignore download step.", save_path)
@@ -127,7 +127,7 @@ def process(s3_bucket,type,key,save_path,overwrite,checksum_matching,checksum_ty
             download_folder(s3_bucket,key,save_path,overwrite)
 
 
-
+@flow
 def do_download_jobs(config):
     if "s3-profile" in config:
         logger.info("setup s3-profile  %s", config["s3-profile"])

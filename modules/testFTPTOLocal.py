@@ -23,7 +23,7 @@ def test_download_file_without_checksum():
 
     #clean directory
     for file in config["files-to-download"]:
-        commons.remove_file.fn(config["save-path"]+file["path"])
+        commons.remove_file(config["save-path"]+file["path"])
 
     # download files
     FTPToLocal.do_download_jobs(config)
@@ -55,7 +55,7 @@ def test_download_file_with_checksum_pass():
     ]
     # clean directory
     for file in config["files-to-download"]:
-        commons.remove_file.fn(config["save-path"] + file["path"])
+        commons.remove_file(config["save-path"] + file["path"])
 
     # download files
     FTPToLocal.do_download_jobs(config)
@@ -87,7 +87,7 @@ def test_download_file_with_checksum_fail():
 
     # clean directory
     for file in config["files-to-download"]:
-        commons.remove_file.fn(config["save-path"] + file["path"])
+        commons.remove_file(config["save-path"] + file["path"])
 
     # download files
     FTPToLocal.do_download_jobs(config)
@@ -115,7 +115,7 @@ def test_download_folder():
 
     # clean directory
     for file in config["files-to-download"]:
-        commons.remove_file.fn(config["save-path"] + file["path"])
+        commons.remove_file(config["save-path"] + file["path"])
 
     # download files
     FTPToLocal.do_download_jobs(config)

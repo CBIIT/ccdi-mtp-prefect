@@ -12,7 +12,6 @@ import Logger as Logger
 logger = Logger.getLogger()
 
 
-
 HOSTNAME = "test"
 USERNAME = "username@email.com"
 PASSWORD = "pwd"
@@ -70,7 +69,7 @@ def downloadFile(ftp_server, filename, dest,overwrite= False, checksum_matching=
         dirs = dest + filename
         if not os.path.exists(os.path.dirname(dirs)):
             makeParentDirs(dirs)
-        else:
+        if os.path.exists(os.path.dirname(dirs)):
             # if Download file exists and overwrite set False, then skip download step
             if not overwrite:
                 logger.info("Download FTP file %s exists on local, ignore download step.", filename)
@@ -137,7 +136,7 @@ def findFilesInDir(ftp,path, file_extension="n/a"):
     ftp.cwd("/")
     return files
 
-
+@flow
 def do_download_jobs(config):
 
     HOSTNAME = config["host-name"]

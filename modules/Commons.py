@@ -26,7 +26,7 @@ Delete file from local machine by given file path
 input:  file path
 output :N/A
 '''
-@task(name="Delete file from local machine by given file path")
+# @task(name="Delete file from local machine by given file path")
 def remove_file(file_path):
     try:
         os.remove(file_path)
