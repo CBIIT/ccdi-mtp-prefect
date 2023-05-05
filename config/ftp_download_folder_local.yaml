@@ -2,10 +2,12 @@
 FTPToLocal:
   host-name: ftp.ebi.ac.uk
   # if is_anonymous is false, user must provide username and pwd to connect to the ftp, that could be refers to prefect secretes.
-  is_anonymous:  True
-  username: admin
-  password: admin
+  is-anonymous:  True
   overwrite: True
+  is-sftp: False
+  use-prefect-secret-block: False
+  prefect-block-secret-pwd: ccdi-ftp-chop-pwd-yizhen
+  prefect-block-secret-username: ccdi-ftp-chop-username-yizhen
   #type : MD5, SHA-1 , SHA-2
   checksum-type: SHA-1
   checksum-matching: True
@@ -17,7 +19,7 @@ FTPToLocal:
   # you have to list all the files to be downloaded
   type: dir
   # set file_extension as n/a, then will skip file extension match
-  file_extension: n/a
+  file-extension: n/a
   save-path: /Users/cheny39/Documents/work/tmp/tmp/
   files-to-download:
     - path: pub/databases/opentargets/platform/23.02/input/gene-ontology-inputs/

@@ -3,11 +3,12 @@ Download file from FTP to local
 \author Yizhen Chen
 
 """
-from ftplib import FTP
+from ftplib import FTP,FTP_TLS
 import os
 import time
 import Commons as commons
 from prefect import task, flow, get_run_logger
+from prefect.blocks.system import Secret
 import Logger as Logger
 logger = Logger.getLogger()
 
@@ -21,7 +22,28 @@ skip_tasks=[]
 success_tasks=[]
 fails_tasks=[]
 
-@task(name="connect to FTP")
+
+@flow(name="connect to SFTP")
+def connectSFTP(HOSTNAME,isAnonymous = True ,USERNAME = "username@email.com" ,PASSWORD = "pwd"):
+    logger = get_run_logger()
+    try:
+        if isAnonymous:
+            logger.info("Connect to SFTP: %s", HOSTNAME)
+            ftp_server = FTP_TLS(HOSTNAME)
+        else:
+            logger.info("Connect to SFTP: %s , %s ", HOSTNAME,USERNAME)
+            ftp_server = FTP_TLS(HOSTNAME, USERNAME, PASSWORD)
+
+        # force UTF-8 encoding
+        ftp_server.encoding = "utf-8"
+        return loginSFTP(ftp_server)
+    except:
+        logger.error("Connect to FTP: %s", HOSTNAME)
+        logger.error("Something  wrong with connect to SFTP")
+
+
+
+@flow(name="connect to FTP")
 def connect(HOSTNAME,isAnonymous = True ,USERNAME = "username@email.com" ,PASSWORD = "pwd"):
     logger = get_run_logger()
     try:
@@ -39,8 +61,17 @@ def connect(HOSTNAME,isAnonymous = True ,USERNAME = "username@email.com" ,PASSWO
         logger.error("Connect to FTP: %s", HOSTNAME)
         logger.error("Something  wrong with connect to FTP")
 
-def login(ftp_server):
 
+def loginSFTP(ftp_server):
+    logger.info("login to FTP")
+    ftp_server.login()
+    ftp_server.prot_p()
+    logger.info(ftp_server.getwelcome())
+    return ftp_server;
+
+
+
+def login(ftp_server):
     logger.info("login to FTP")
     ftp_server.login()
     logger.info(ftp_server.getwelcome())
@@ -114,10 +145,8 @@ def findFilesInDir(ftp,path, file_extension="n/a"):
     files = []
     # direct to the ftp path
     ftp.cwd(path)
-
     # list files in the folder
     folders = ftp.nlst()
-
     while len(folders) > 0:
 
         item = folders.pop()
@@ -140,18 +169,28 @@ def findFilesInDir(ftp,path, file_extension="n/a"):
 def do_download_jobs(config):
 
     HOSTNAME = config["host-name"]
-    isAnonymous = config["is_anonymous"]
-    userName=commons.check_dict_key(config, "username", "username")
-    password=commons.check_dict_key(config, "password", "password")
+    isAnonymous = config["is-anonymous"]
+    if config["use-prefect-secret-block"]:
+        #"ccdi-ftp-chop-username-yizhen"
+        secret_usr_block = Secret.load(config["prefect-block-secret-username"])
+        # Access the stored secret
+        userName=secret_usr_block.get()
+        secret_pwd_block = Secret.load(config["prefect-block-secret-pwd"])
+        # Access the stored secret
+        password = secret_pwd_block.get()
+
     checksum_matching = commons.check_dict_key(config, "checksum-matching", False)
     checksum_type = commons.check_dict_key(config, "checksum-type", "")
     overwrite = commons.check_dict_key(config, "overwrite", False)
     OUTPUT_FOLDER = commons.check_dict_key(config, "save-path", "/Users/cheny39/Documents/work/tmp/tmp/")
     isFolder = commons.check_dict_key(config, "type", "file")
 
-    file_extension =commons.check_dict_key(config, "file_extension", "n/a")
+    file_extension =commons.check_dict_key(config, "file-extension", "n/a")
     #Connect to FTP
-    ftp = connect(HOSTNAME)
+    if config["is-sftp"]:
+        ftp = connectSFTP(HOSTNAME,isAnonymous,userName,password)
+    else:
+        ftp = connect(HOSTNAME,isAnonymous,userName,password)
     #get list of download tasks
     list_of_download_tasks = config["files-to-download"]
 
@@ -163,7 +202,6 @@ def do_download_jobs(config):
 
             # Get all Json Files listed in FTP_PATH
             files = findFilesInDir(ftp,FTP_PATH, file_extension)
-
             checksum_matching = False
             checksum=""
             #Download Json Files one by one

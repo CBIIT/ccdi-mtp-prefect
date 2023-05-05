@@ -1,7 +1,7 @@
 import os
 import FTPToLocal as FTPToLocal
 import Commons as commons
-
+from prefect.blocks.system import Secret
 
 def test_download_file_without_checksum():
     print("Test Download file from FTP without Checksum validation")
@@ -148,3 +148,17 @@ def test_download_folder_skip_existing_files():
         assert os.path.exists(config["save-path"] + file["path"]) == True
 
 
+def test_login_ftp_anonymous():
+        ftp_server=FTPToLocal.connect("ftp.ebi.ac.uk")
+        assert ftp_server.getwelcome() != ""
+
+def test_login_ftp_username_pwd():
+    # secret_usr_block = Secret.load("ccdi-ftp-chop-username-yizhen")
+    # # Access the stored secret
+    # userName = secret_usr_block.get()
+    # secret_pwd_block = Secret.load("ccdi-ftp-chop-pwd-yizhen")
+    # # Access the stored secret
+    # password = secret_pwd_block.get()
+    # ftp_server=FTPToLocal.connect("transfer2.chop.edu", False, userName, password)
+    # assert ftp_server.getwelcome() != ""
+    print("TBD")
