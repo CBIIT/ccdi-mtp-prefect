@@ -127,7 +127,7 @@ def process(s3_bucket,type,key,save_path,overwrite,checksum_matching,checksum_ty
             download_folder(s3_bucket,key,save_path,overwrite)
 
 
-@flow
+@flow(name="CCDI-MTP : Start Download files from S3 ")
 def do_download_jobs(config):
     if "s3-profile" in config:
         logger.info("setup s3-profile  %s", config["s3-profile"])
@@ -150,7 +150,7 @@ def do_download_jobs(config):
 '''
 main function 
 '''
-@flow(name="CCDI-MTP : Execute Job to Download files from S3 ")
+@flow(name="CCDI-MTP : Download files from S3 ")
 def run(config):
     logger = get_run_logger()
     start_time = time.perf_counter()
@@ -159,13 +159,13 @@ def run(config):
     if isConfigValid(config):
         do_download_jobs(config)
     else:
-        logger.error("InValid Configuration setting for S3 to Local")
+        logger.error("InValid Configuration settings")
     end_time = time.perf_counter()
     execution_time = end_time - start_time
     execution_time_in_minutes = execution_time / 60.0
-    logger.info("Job - Copy file from S3 to local finished. Execution time in minutes %s:", execution_time_in_minutes)
-    logger.info("downloaded %s files", len(success_tasks))
-    logger.info("skips %s files", len(skip_tasks))
-    logger.info("fail to download %s files", len(fails_tasks))
+    logger.info("Job - Download files from S3 finished. Execution time in minutes %s:", execution_time_in_minutes)
+    logger.info("Downloaded %s files", len(success_tasks))
+    logger.info("Skips %s files", len(skip_tasks))
+    logger.info("Fail to download %s files", len(fails_tasks))
     for task in fails_tasks:
-        logger.info("fail to download %s ", task)
+        logger.info("Fail to download %s ", task)

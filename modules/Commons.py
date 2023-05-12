@@ -4,8 +4,7 @@ import json
 import os
 import sys
 import hashlib
-import Logger as Logger
-from prefect import task
+import modules.Logger as Logger
 logger = Logger.getLogger()
 '''
 check if dict has key or not,return key value if key exists, otherwise return default value

@@ -1,0 +1,12 @@
+---
+S3ToLocal:
+  s3-profile: mtp-opensearch
+  type: dir
+  save-path: /home/cheny39/tmp/
+  overwrite: False
+  checksum-matching: False
+  s3-bucket: d3b-openaccess-us-east-1-prd-pbta
+  files-to-download:
+    - key: open-targets/v12/mtp-tables/pre-release/
+steps:
+  - S3ToLocal

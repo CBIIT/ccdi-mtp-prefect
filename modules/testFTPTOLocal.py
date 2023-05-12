@@ -1,7 +1,6 @@
 import os
 import FTPToLocal as FTPToLocal
 import Commons as commons
-from prefect.blocks.system import Secret
 
 def test_download_file_without_checksum():
     print("Test Download file from FTP without Checksum validation")

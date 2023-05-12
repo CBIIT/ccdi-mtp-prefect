@@ -6,10 +6,10 @@ Download file from FTP to local
 from ftplib import FTP,FTP_TLS
 import os
 import time
-import Commons as commons
+import modules.Commons as commons
 from prefect import task, flow, get_run_logger
 from prefect.blocks.system import Secret
-import Logger as Logger
+import modules.Logger as Logger
 logger = Logger.getLogger()
 
 
@@ -23,7 +23,7 @@ success_tasks=[]
 fails_tasks=[]
 
 
-@flow(name="connect to SFTP")
+@flow(name="Connect to SFTP")
 def connectSFTP(HOSTNAME,isAnonymous = True ,USERNAME = "username@email.com" ,PASSWORD = "pwd"):
     logger = get_run_logger()
     try:
@@ -38,12 +38,12 @@ def connectSFTP(HOSTNAME,isAnonymous = True ,USERNAME = "username@email.com" ,PA
         ftp_server.encoding = "utf-8"
         return loginSFTP(ftp_server)
     except:
-        logger.error("Connect to FTP: %s", HOSTNAME)
+        logger.error("Connect to SFTP: %s", HOSTNAME)
         logger.error("Something  wrong with connect to SFTP")
 
 
 
-@flow(name="connect to FTP")
+@flow(name="Connect to FTP")
 def connect(HOSTNAME,isAnonymous = True ,USERNAME = "username@email.com" ,PASSWORD = "pwd"):
     logger = get_run_logger()
     try:
@@ -63,7 +63,7 @@ def connect(HOSTNAME,isAnonymous = True ,USERNAME = "username@email.com" ,PASSWO
 
 
 def loginSFTP(ftp_server):
-    logger.info("login to FTP")
+    logger.info("login to SFTP")
     ftp_server.login()
     ftp_server.prot_p()
     logger.info(ftp_server.getwelcome())
@@ -93,22 +93,21 @@ def makeParentDirs(path):
         except OSError as e:
             logger.error("Get ERROR when creating directories recursively : %s", e)
 
-@task(name="download files")
+@task(name="Download Individual file")
 def downloadFile(ftp_server, filename, dest,overwrite= False, checksum_matching= False,checksum_type="md5",checksum=""):
         logger = get_run_logger()
-        logger.info("download file %s", filename)
+        logger.info(" Start downloading file %s", filename)
         dirs = dest + filename
         if not os.path.exists(os.path.dirname(dirs)):
             makeParentDirs(dirs)
         if os.path.exists(os.path.dirname(dirs)):
             # if Download file exists and overwrite set False, then skip download step
             if not overwrite:
-                logger.info("Download FTP file %s exists on local, ignore download step.", filename)
+                logger.info("File %s exists, ignore download step.", filename)
                 skip_tasks.append(filename)
                 return
 
-        logger.info("Downloading file :  {0}".format(filename))
-        logger.info("Saving  file to  file :  {0}".format(os.path.dirname(dirs)))
+        logger.info("Save File  :  {0}".format(os.path.dirname(dirs)))
         try:
             with open(dirs, "wb") as file:
                 # Command for Downloading the file "RETR filename"
@@ -120,9 +119,9 @@ def downloadFile(ftp_server, filename, dest,overwrite= False, checksum_matching=
 
         if checksum_matching == True:
             if commons.validate_checksum(dirs, checksum_type, checksum):
-                    logger.info("Pass Checksum validation - file %s  on local", dirs)
+                    logger.info("Pass Checksum validation - file %s", dirs)
             else:
-                logger.error("Fails Checksum validation - file %s  on local, deleting file", dirs)
+                logger.error("Fails Checksum validation - file %s, deleting file", dirs)
                 commons.remove_file(dirs)
         else:
             logger.info("Skip Checksum validation - file %s", dirs)
@@ -137,7 +136,7 @@ def isDirectory(item):
 
 
 # find files in a directory with specific file_extension
-@task(name="find files in a directory with specific file_extension")
+@task(name="Find files in a directory with specific file_extension")
 def findFilesInDir(ftp,path, file_extension="n/a"):
     logger = get_run_logger()
     logger.info("find files in a %s with specific file_extension  %s", path , file_extension)
@@ -165,11 +164,14 @@ def findFilesInDir(ftp,path, file_extension="n/a"):
     ftp.cwd("/")
     return files
 
-@flow
+
+@flow(name="CCDI-MTP : Start Downloading Jobs ")
 def do_download_jobs(config):
 
     HOSTNAME = config["host-name"]
     isAnonymous = config["is-anonymous"]
+    userName=""
+    password=""
     if config["use-prefect-secret-block"]:
         #"ccdi-ftp-chop-username-yizhen"
         secret_usr_block = Secret.load(config["prefect-block-secret-username"])
@@ -220,19 +222,18 @@ def do_download_jobs(config):
 '''
 main function 
 '''
-@flow(name="CCDI-MTP : Execute Job to Download files from FTP ")
+@flow(name="CCDI-MTP : Download files from FTP ")
 def run(config):
     logger = get_run_logger()
     start_time = time.perf_counter()
     # get config
-    logger.info(config)
     end_time = time.perf_counter()
     execution_time = end_time - start_time
     execution_time_in_minutes = execution_time / 60.0
     do_download_jobs(config)
-    logger.info("Job - Download file from FTP to local finished. Execution time in minutes %s:", execution_time_in_minutes)
-    logger.info("downloaded %s files", len(success_tasks))
+    logger.info("Job - Download file from FTP finished. Execution time in minutes %s:", execution_time_in_minutes)
+    logger.info("Downloaded %s files", len(success_tasks))
     logger.info("skips %s files", len(skip_tasks))
-    logger.info("fail to download %s files", len(fails_tasks))
+    logger.info("Fail to download %s files", len(fails_tasks))
 
 
