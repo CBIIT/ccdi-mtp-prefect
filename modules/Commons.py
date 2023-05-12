@@ -4,11 +4,8 @@ import json
 import os
 import sys
 import hashlib
-from modules.Logger import logger
-
-logger = logging.getLogger(__name__)
-
-
+import modules.Logger as Logger
+logger = Logger.getLogger()
 '''
 check if dict has key or not,return key value if key exists, otherwise return default value
 input : dict
@@ -25,11 +22,10 @@ def check_dict_key(my_dict, key, default_value):
 
 '''
 Delete file from local machine by given file path
-
 input:  file path
 output :N/A
 '''
-
+# @task(name="Delete file from local machine by given file path")
 def remove_file(file_path):
     try:
         os.remove(file_path)
@@ -39,15 +35,17 @@ def remove_file(file_path):
 
 
 def validate_checksum(filename, type,expected_checksum):
+    if type == "MD5":
+        alg = hashlib.md5()
+    elif type == "SHA-1":
+        alg = hashlib.sha1()
+    elif type == "SHA-2":
+        alg = hashlib.sha256()
+    else:
+        return  False
+
     with open(filename, "rb") as f:
         # create a new MD5 hash object
-        if type=="md5":
-            alg = hashlib.md5()
-        if type == "SHA-1":
-            alg = hashlib.sha1()
-        if type == "SHA-2":
-            alg = hashlib.sha256()
-
         # read the file in chunks to avoid loading the whole file into memory at once
         chunk_size = 1024 * 1024  # 1 MB
         chunk = f.read(chunk_size)
@@ -66,11 +64,9 @@ def read_csv_to_dict(path):
         reader = csv.reader(csvfile)
         return list(reader)
 
-
 def create_directory_if_not_found(path):
     if not os.path.exists(path):
         os.makedirs(path)
-
 
 def read_json_with_multiple_Obj(path):
     jsonList = []

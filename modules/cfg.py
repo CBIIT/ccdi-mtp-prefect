@@ -1,9 +1,8 @@
 import os, sys, errno
 import csv
 import configargparse
-import logging
-
-logger = logging.getLogger(__name__)
+import modules.Logger as Logger
+logger = Logger.getLogger()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
