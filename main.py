@@ -19,12 +19,15 @@ def execution(step, config):
 @flow(name="CCDI MTP ETL")
 def main(url):
     logger = get_run_logger()
+    yaml_dictionary = {}
     try:
         response = requests.get(url)
         yaml_data = yaml.safe_load(response.content)
         yaml_dictionary = Dict(yaml_data)
     except (IOError,yaml.YAMLError)as exc:
         logger.error("There is an issue to load configuration settings %s", url)
+        return
+        
     yaml_dict = yaml_dictionary
 
     for step in yaml_dict.steps:
