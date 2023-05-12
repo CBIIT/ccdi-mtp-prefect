@@ -1,0 +1,11 @@
+---
+pmtl:
+  inputs:
+    pmtl: data/inputs/pmtl_v3.0.csv
+    targets:
+      - /Users/cheny39/Documents/work/22.11/json/targets/part-00000-55bc3d37-90ad-48ea-a5a2-de8d3b646beb-c000.json
+      - /Users/cheny39/Documents/work/22.11/json/targets/part-00001-55bc3d37-90ad-48ea-a5a2-de8d3b646beb-c000.json
+      - /Users/cheny39/Documents/work/22.11/json/targets/part-00002-55bc3d37-90ad-48ea-a5a2-de8d3b646beb-c000.json
+     output: /Users/cheny39/Documents/work/22.11/json/targets_pmtl/
+steps:
+  - pmtl

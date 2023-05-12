@@ -1,3 +1,4 @@
 /vnv
 .idea/
 modules/__pycache__/
+.DS_Store

@@ -1,5 +1,5 @@
 """
-Download file from FTP to local
+Download file from FTP 
 \author Yizhen Chen
 
 """

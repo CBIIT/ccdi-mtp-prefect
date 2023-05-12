@@ -3,6 +3,7 @@ import requests
 import yaml
 from addict import Dict
 import modules.S3ToLocal as S3ToLocal
+import modules.PMTL as pmtl
 import  modules.FTPToLocal as FTPTOLocal
 import modules.Logger as Logger
 logger = Logger.getLogger()
@@ -12,6 +13,8 @@ def execution(step, config):
         S3ToLocal.run(config)
     elif step == "FTPToLocal":
         FTPTOLocal.run(config)
+    elif(step == "pmtl"):
+        pmtl.run(config)
     else:
         logger.error("Unknown step: %s", step)
 
@@ -39,5 +42,4 @@ def main(url):
             execution(step, yaml_dict[step])
 
 if __name__ == '__main__':
-    url = "https://raw.githubusercontent.com/CBIIT/ccdi-mtp-prefect/mtp/config/local_download_file.yaml"
     main(url)
